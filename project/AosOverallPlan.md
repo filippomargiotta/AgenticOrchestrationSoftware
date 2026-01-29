@@ -4,7 +4,7 @@ This file captures the month-by-month plan to implement **AocWebApi** (Agentic O
 
 ---
 
-## Month 1 — Foundations + determinism contract
+## 2026-01 — Foundations + determinism contract
 
 **Goal:** Establish the platform skeleton and the **determinism contract** that every component must obey.
 
@@ -22,7 +22,7 @@ This file captures the month-by-month plan to implement **AocWebApi** (Agentic O
 
 ---
 
-## Month 2 — Deterministic engine MVP + early sandbox spike
+## 2026-02 — Deterministic engine MVP + early sandbox spike
 
 **Goal:** Make replay real early, and de-risk sandbox latency early.
 
@@ -36,7 +36,7 @@ This file captures the month-by-month plan to implement **AocWebApi** (Agentic O
 
 ---
 
-## Month 3 — Replay hardening + HMAC log chain + evaluation harness MVP
+## 2026-03 — Replay hardening + HMAC log chain + evaluation harness MVP
 
 **Goal:** Make determinism defensible and auditable.
 
@@ -51,7 +51,7 @@ This file captures the month-by-month plan to implement **AocWebApi** (Agentic O
 
 ---
 
-## Month 4 — Capability router v1 + early planning spike
+## 2026-04 — Capability router v1 + early planning spike
 
 **Goal:** Deterministic routing logic + de-risk local planning early.
 
@@ -65,7 +65,7 @@ This file captures the month-by-month plan to implement **AocWebApi** (Agentic O
 
 ---
 
-## Month 5 — Router v2 (10ms target) + metrics store
+## 2026-05 — Router v2 (10ms target) + metrics store
 
 **Goal:** Make router fast and stable as conditions grow.
 
@@ -79,7 +79,7 @@ This file captures the month-by-month plan to implement **AocWebApi** (Agentic O
 
 ---
 
-## Month 6 — Secure sandbox v1 (pre-warm + tokens + gateway)
+## 2026-06 — Secure sandbox v1 (pre-warm + tokens + gateway)
 
 **Goal:** Functional isolation path integrated with the orchestration API.
 
@@ -93,7 +93,7 @@ This file captures the month-by-month plan to implement **AocWebApi** (Agentic O
 
 ---
 
-## Month 7 — Sandbox hardening + security tests + latency tuning
+## 2026-07 — Sandbox hardening + security tests + latency tuning
 
 **Goal:** Reduce the chance the sandbox becomes the schedule killer late in the year.
 
@@ -107,7 +107,7 @@ This file captures the month-by-month plan to implement **AocWebApi** (Agentic O
 
 ---
 
-## Month 8 — Planner v1: playbooks + retrieval + step execution
+## 2026-08 — Planner v1: playbooks + retrieval + step execution
 
 **Goal:** Move from “model outputs plans” to “system produces reliable plans”.
 
@@ -121,7 +121,7 @@ This file captures the month-by-month plan to implement **AocWebApi** (Agentic O
 
 ---
 
-## Month 9 — Planner v2: critic validation + recovery loops
+## 2026-09 — Planner v2: critic validation + recovery loops
 
 **Goal:** Handle local model weaknesses (known risk).
 
@@ -135,7 +135,7 @@ This file captures the month-by-month plan to implement **AocWebApi** (Agentic O
 
 ---
 
-## Month 10 — Evaluation v2: semantic scoring + confidence calibration
+## 2026-10 — Evaluation v2: semantic scoring + confidence calibration
 
 **Goal:** Solve the “agent output variability” scoring problem.
 
@@ -149,7 +149,7 @@ This file captures the month-by-month plan to implement **AocWebApi** (Agentic O
 
 ---
 
-## Month 11 — Drift detection (CUSUM) + observability + load testing
+## 2026-11 — Drift detection (CUSUM) + observability + load testing
 
 **Goal:** Monitoring that works in practice, not only in theory.
 
@@ -163,7 +163,7 @@ This file captures the month-by-month plan to implement **AocWebApi** (Agentic O
 
 ---
 
-## Month 12 — Stabilization + documentation + WBSO evidence pack
+## 2026-12 — Stabilization + documentation + WBSO evidence pack
 
 **Goal:** Ship a stable baseline and prove the R&D claims with artifacts.
 
