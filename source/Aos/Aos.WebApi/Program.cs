@@ -1,6 +1,7 @@
 using Aos.WebApi.Options;
 using Aos.WebApi.Services;
 using OpenTelemetry.Trace;
+using Scalar.AspNetCore;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,8 @@ builder.Host.UseSerilog((context, loggerConfiguration) =>
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 builder.Services.Configure<EventLogOptions>(
     builder.Configuration.GetSection(EventLogOptions.SectionName));
@@ -35,6 +38,9 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
