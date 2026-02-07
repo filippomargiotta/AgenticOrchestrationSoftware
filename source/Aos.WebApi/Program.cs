@@ -22,6 +22,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.Configure<EventLogOptions>(
     builder.Configuration.GetSection(EventLogOptions.SectionName));
 builder.Services.AddSingleton<IEventLogWriter, FileEventLogWriter>();
+builder.Services.AddSingleton<ITimeSource, SystemTimeSource>();
 
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracerProviderBuilder =>

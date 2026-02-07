@@ -15,12 +15,15 @@ public sealed record Manifest(
 public sealed record SeedInfo(
     string SeedId,
     string Algorithm,
-    long Value
+    long Value,
+    string? Derivation
 );
 
 public sealed record TimeSourceInfo(
+    string Mode,
     string Source,
     string ClockId,
+    string Precision,
     string? Notes
 );
 

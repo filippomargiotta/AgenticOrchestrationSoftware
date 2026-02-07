@@ -9,17 +9,19 @@ namespace Aos.WebApi.Controllers;
 public class WorkflowController : ControllerBase
 {
     private readonly IEventLogWriter _eventLogWriter;
+    private readonly ITimeSource _timeSource;
 
-    public WorkflowController(IEventLogWriter eventLogWriter)
+    public WorkflowController(IEventLogWriter eventLogWriter, ITimeSource timeSource)
     {
         _eventLogWriter = eventLogWriter;
+        _timeSource = timeSource;
     }
 
     [HttpPost("hello")]
     public async Task<IActionResult> Hello(CancellationToken cancellationToken)
     {
         var runId = Guid.NewGuid().ToString("N");
-        var now = DateTimeOffset.UtcNow;
+        var now = _timeSource.NowUtc();
 
         var manifest = new Manifest(
             ManifestVersion: "0.1",
@@ -27,11 +29,14 @@ public class WorkflowController : ControllerBase
             Seed: new SeedInfo(
                 SeedId: "seed-1",
                 Algorithm: "xoroshiro128**",
-                Value: 123456789),
+                Value: 123456789,
+                Derivation: "static placeholder"),
             TimeSource: new TimeSourceInfo(
+                Mode: "record",
                 Source: "system-utc",
                 ClockId: "clock-1",
-                Notes: "non-deterministic placeholder"),
+                Precision: "utc-millis",
+                Notes: "recorded via injected time source"),
             Models: new[]
             {
                 new ModelRef("local-null", "local", "0.0")
@@ -46,6 +51,14 @@ public class WorkflowController : ControllerBase
             },
             StartedAtUtc: now,
             CompletedAtUtc: now);
+
+        var manifestErrors = ManifestValidator.Validate(manifest);
+        if (manifestErrors.Count > 0)
+        {
+            return Problem(
+                detail: string.Join(" ", manifestErrors),
+                statusCode: StatusCodes.Status500InternalServerError);
+        }
 
         var entry = new EventLogEntry(
             RunId: runId,
