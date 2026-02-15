@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Aos.WebApi.Models;
 using Aos.WebApi.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -10,11 +11,16 @@ public class WorkflowController : ControllerBase
 {
     private readonly IEventLogWriter _eventLogWriter;
     private readonly ITimeSource _timeSource;
+    private readonly ILogger<WorkflowController> _logger;
 
-    public WorkflowController(IEventLogWriter eventLogWriter, ITimeSource timeSource)
+    public WorkflowController(
+        IEventLogWriter eventLogWriter,
+        ITimeSource timeSource,
+        ILogger<WorkflowController> logger)
     {
         _eventLogWriter = eventLogWriter;
         _timeSource = timeSource;
+        _logger = logger;
     }
 
     [HttpPost("hello")]
@@ -22,6 +28,10 @@ public class WorkflowController : ControllerBase
     {
         var runId = Guid.NewGuid().ToString("N");
         var now = _timeSource.NowUtc();
+
+        _logger.LogInformation("Starting workflow hello for run {RunId}", runId);
+        Activity.Current?.SetTag("aos.run_id", runId);
+        Activity.Current?.SetTag("aos.workflow", "hello");
 
         var manifest = new Manifest(
             ManifestVersion: "0.1",
@@ -55,18 +65,29 @@ public class WorkflowController : ControllerBase
         var manifestErrors = ManifestValidator.Validate(manifest);
         if (manifestErrors.Count > 0)
         {
+            _logger.LogError(
+                "Manifest validation failed for run {RunId}: {Errors}",
+                runId,
+                string.Join(" ", manifestErrors));
             return Problem(
                 detail: string.Join(" ", manifestErrors),
                 statusCode: StatusCodes.Status500InternalServerError);
         }
 
-        var entry = new EventLogEntry(
+        _logger.LogInformation(
+            "Manifest validated for run {RunId} with version {Version}",
+            runId,
+            manifest.ManifestVersion);
+
+        var entry = new Aos.WebApi.Models.EventLogEntry(
             RunId: runId,
             EventType: "workflow.hello",
             Data: new { Message = "hello", ManifestVersion = manifest.ManifestVersion },
             OccurredAtUtc: now);
 
         await _eventLogWriter.WriteAsync(entry, cancellationToken);
+
+        _logger.LogInformation("Completed workflow hello for run {RunId}", runId);
 
         return Ok(new
         {
