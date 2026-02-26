@@ -1,7 +1,9 @@
 using System.Text;
 using System.Text.Json;
 using Aos.WebApi.Models;
+using Aos.WebApi.Options;
 using Aos.WebApi.Services;
+using Microsoft.Extensions.Options;
 using Xunit;
 
 namespace Aos.WebApi.Tests;
@@ -36,7 +38,8 @@ public sealed class GoldenTests
 
         var service = new HelloWorkflowService(
             new FixedSeedProvider(GoldenSeed),
-            recordTimeSource);
+            recordTimeSource,
+            Microsoft.Extensions.Options.Options.Create(CreateGoldenHelloWorkflowOptions()));
 
         var artifacts = service.CreateHelloArtifacts(GoldenRunId);
 
@@ -54,7 +57,8 @@ public sealed class GoldenTests
         var replayTimeSource = new ReplayTimeSource([goldenManifest.StartedAtUtc]);
         var service = new HelloWorkflowService(
             new FixedSeedProvider(goldenManifest.Seed),
-            replayTimeSource);
+            replayTimeSource,
+            Microsoft.Extensions.Options.Options.Create(CreateGoldenHelloWorkflowOptions()));
 
         var replayed = service.CreateHelloArtifacts(goldenManifest.RunId);
 
@@ -120,6 +124,36 @@ public sealed class GoldenTests
         "..",
         "Golden",
         GoldenScenario));
+
+    private static HelloWorkflowOptions CreateGoldenHelloWorkflowOptions() => new()
+    {
+        Models =
+        [
+            new HelloWorkflowModelOptions
+            {
+                ModelId = "local-null",
+                Provider = "local",
+                Version = "0.0"
+            }
+        ],
+        Tools =
+        [
+            new HelloWorkflowToolOptions
+            {
+                ToolId = "noop",
+                Version = "0.0"
+            }
+        ],
+        PolicyDecisions =
+        [
+            new HelloWorkflowPolicyOptions
+            {
+                PolicyId = "policy-allow",
+                Decision = "allow",
+                Reason = "placeholder"
+            }
+        ]
+    };
 
     private sealed class FixedSeedProvider : ISeedProvider
     {

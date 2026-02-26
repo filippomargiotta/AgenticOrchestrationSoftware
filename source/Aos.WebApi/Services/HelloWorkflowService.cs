@@ -1,4 +1,6 @@
 using Aos.WebApi.Models;
+using Aos.WebApi.Options;
+using Microsoft.Extensions.Options;
 
 namespace Aos.WebApi.Services;
 
@@ -6,13 +8,16 @@ public sealed class HelloWorkflowService : IHelloWorkflowService
 {
     private readonly ISeedProvider _seedProvider;
     private readonly ITimeSource _timeSource;
+    private readonly HelloWorkflowOptions _options;
 
     public HelloWorkflowService(
         ISeedProvider seedProvider,
-        ITimeSource timeSource)
+        ITimeSource timeSource,
+        IOptions<HelloWorkflowOptions> options)
     {
         _seedProvider = seedProvider;
         _timeSource = timeSource;
+        _options = options.Value;
     }
 
     public HelloWorkflowArtifacts CreateHelloArtifacts(string runId)
@@ -25,24 +30,18 @@ public sealed class HelloWorkflowService : IHelloWorkflowService
         var now = _timeSource.NowUtc();
         var seed = _seedProvider.GetLockedSeed(runId);
         var timeSourceInfo = _timeSource.Describe();
+        var models = ResolveModels();
+        var tools = ResolveTools();
+        var policyDecisions = ResolvePolicyDecisions();
 
         var manifest = new Manifest(
             ManifestVersion: "0.1",
             RunId: runId,
             Seed: seed,
             TimeSource: timeSourceInfo,
-            Models: new[]
-            {
-                new ModelRef("local-null", "local", "0.0")
-            },
-            Tools: new[]
-            {
-                new ToolRef("noop", "0.0")
-            },
-            PolicyDecisions: new[]
-            {
-                new PolicyDecision("policy-allow", "allow", "placeholder")
-            },
+            Models: models,
+            Tools: tools,
+            PolicyDecisions: policyDecisions,
             StartedAtUtc: now,
             CompletedAtUtc: now);
 
@@ -61,5 +60,56 @@ public sealed class HelloWorkflowService : IHelloWorkflowService
         return new HelloWorkflowArtifacts(
             Manifest: manifest,
             EventLogEntries: new[] { entry });
+    }
+
+    private IReadOnlyList<ModelRef> ResolveModels()
+    {
+        if (_options.Models.Count == 0)
+        {
+            throw new InvalidOperationException("HelloWorkflow.Models must contain at least one entry.");
+        }
+
+        return _options.Models.Select(model => new ModelRef(
+                RequireValue(model.ModelId, "HelloWorkflow.Models[].ModelId"),
+                RequireValue(model.Provider, "HelloWorkflow.Models[].Provider"),
+                RequireValue(model.Version, "HelloWorkflow.Models[].Version")))
+            .ToArray();
+    }
+
+    private IReadOnlyList<ToolRef> ResolveTools()
+    {
+        if (_options.Tools.Count == 0)
+        {
+            throw new InvalidOperationException("HelloWorkflow.Tools must contain at least one entry.");
+        }
+
+        return _options.Tools.Select(tool => new ToolRef(
+                RequireValue(tool.ToolId, "HelloWorkflow.Tools[].ToolId"),
+                RequireValue(tool.Version, "HelloWorkflow.Tools[].Version")))
+            .ToArray();
+    }
+
+    private IReadOnlyList<PolicyDecision> ResolvePolicyDecisions()
+    {
+        if (_options.PolicyDecisions.Count == 0)
+        {
+            throw new InvalidOperationException("HelloWorkflow.PolicyDecisions must contain at least one entry.");
+        }
+
+        return _options.PolicyDecisions.Select(policy => new PolicyDecision(
+                RequireValue(policy.PolicyId, "HelloWorkflow.PolicyDecisions[].PolicyId"),
+                RequireValue(policy.Decision, "HelloWorkflow.PolicyDecisions[].Decision"),
+                policy.Reason))
+            .ToArray();
+    }
+
+    private static string RequireValue(string? value, string path)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new InvalidOperationException($"{path} is required.");
+        }
+
+        return value;
     }
 }

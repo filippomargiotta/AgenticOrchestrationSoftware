@@ -21,6 +21,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.Configure<EventLogOptions>(
     builder.Configuration.GetSection(EventLogOptions.SectionName));
+builder.Services.Configure<HelloWorkflowOptions>(
+    builder.Configuration.GetSection(HelloWorkflowOptions.SectionName));
 builder.Services.AddSingleton<IEventLogWriter, FileEventLogWriter>();
 builder.Services.AddSingleton<ISeedGenerator, RandomSeedGenerator>();
 builder.Services.AddSingleton<ISeedProvider, LockedSeedProvider>();
