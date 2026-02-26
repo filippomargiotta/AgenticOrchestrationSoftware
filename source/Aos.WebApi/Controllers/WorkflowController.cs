@@ -10,15 +10,18 @@ namespace Aos.WebApi.Controllers;
 public class WorkflowController : ControllerBase
 {
     private readonly IEventLogWriter _eventLogWriter;
+    private readonly ISeedProvider _seedProvider;
     private readonly ITimeSource _timeSource;
     private readonly ILogger<WorkflowController> _logger;
 
     public WorkflowController(
         IEventLogWriter eventLogWriter,
+        ISeedProvider seedProvider,
         ITimeSource timeSource,
         ILogger<WorkflowController> logger)
     {
         _eventLogWriter = eventLogWriter;
+        _seedProvider = seedProvider;
         _timeSource = timeSource;
         _logger = logger;
     }
@@ -28,6 +31,8 @@ public class WorkflowController : ControllerBase
     {
         var runId = Guid.NewGuid().ToString("N");
         var now = _timeSource.NowUtc();
+        var seed = _seedProvider.GetLockedSeed(runId);
+        var timeSourceInfo = _timeSource.Describe();
 
         _logger.LogInformation("Starting workflow hello for run {RunId}", runId);
         Activity.Current?.SetTag("aos.run_id", runId);
@@ -36,17 +41,8 @@ public class WorkflowController : ControllerBase
         var manifest = new Manifest(
             ManifestVersion: "0.1",
             RunId: runId,
-            Seed: new SeedInfo(
-                SeedId: "seed-1",
-                Algorithm: "xoroshiro128**",
-                Value: 123456789,
-                Derivation: "static placeholder"),
-            TimeSource: new TimeSourceInfo(
-                Mode: "record",
-                Source: "system-utc",
-                ClockId: "clock-1",
-                Precision: "utc-millis",
-                Notes: "recorded via injected time source"),
+            Seed: seed,
+            TimeSource: timeSourceInfo,
             Models: new[]
             {
                 new ModelRef("local-null", "local", "0.0")
