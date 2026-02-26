@@ -25,6 +25,7 @@ builder.Services.AddSingleton<IEventLogWriter, FileEventLogWriter>();
 builder.Services.AddSingleton<ISeedGenerator, RandomSeedGenerator>();
 builder.Services.AddSingleton<ISeedProvider, LockedSeedProvider>();
 builder.Services.AddSingleton<ITimeSource, SystemTimeSource>();
+builder.Services.AddSingleton<IHelloWorkflowService, HelloWorkflowService>();
 
 builder.Services.AddOpenTelemetry()
     .WithTracing(tracerProviderBuilder =>

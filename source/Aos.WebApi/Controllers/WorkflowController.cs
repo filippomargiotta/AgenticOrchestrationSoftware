@@ -10,19 +10,16 @@ namespace Aos.WebApi.Controllers;
 public class WorkflowController : ControllerBase
 {
     private readonly IEventLogWriter _eventLogWriter;
-    private readonly ISeedProvider _seedProvider;
-    private readonly ITimeSource _timeSource;
+    private readonly IHelloWorkflowService _helloWorkflowService;
     private readonly ILogger<WorkflowController> _logger;
 
     public WorkflowController(
         IEventLogWriter eventLogWriter,
-        ISeedProvider seedProvider,
-        ITimeSource timeSource,
+        IHelloWorkflowService helloWorkflowService,
         ILogger<WorkflowController> logger)
     {
         _eventLogWriter = eventLogWriter;
-        _seedProvider = seedProvider;
-        _timeSource = timeSource;
+        _helloWorkflowService = helloWorkflowService;
         _logger = logger;
     }
 
@@ -30,65 +27,38 @@ public class WorkflowController : ControllerBase
     public async Task<IActionResult> Hello(CancellationToken cancellationToken)
     {
         var runId = Guid.NewGuid().ToString("N");
-        var now = _timeSource.NowUtc();
-        var seed = _seedProvider.GetLockedSeed(runId);
-        var timeSourceInfo = _timeSource.Describe();
 
         _logger.LogInformation("Starting workflow hello for run {RunId}", runId);
         Activity.Current?.SetTag("aos.run_id", runId);
         Activity.Current?.SetTag("aos.workflow", "hello");
 
-        var manifest = new Manifest(
-            ManifestVersion: "0.1",
-            RunId: runId,
-            Seed: seed,
-            TimeSource: timeSourceInfo,
-            Models: new[]
-            {
-                new ModelRef("local-null", "local", "0.0")
-            },
-            Tools: new[]
-            {
-                new ToolRef("noop", "0.0")
-            },
-            PolicyDecisions: new[]
-            {
-                new PolicyDecision("policy-allow", "allow", "placeholder")
-            },
-            StartedAtUtc: now,
-            CompletedAtUtc: now);
-
-        var manifestErrors = ManifestValidator.Validate(manifest);
-        if (manifestErrors.Count > 0)
+        HelloWorkflowArtifacts artifacts;
+        try
         {
-            _logger.LogError(
-                "Manifest validation failed for run {RunId}: {Errors}",
-                runId,
-                string.Join(" ", manifestErrors));
-            return Problem(
-                detail: string.Join(" ", manifestErrors),
-                statusCode: StatusCodes.Status500InternalServerError);
+            artifacts = _helloWorkflowService.CreateHelloArtifacts(runId);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError("Workflow hello failed validation for run {RunId}: {Error}", runId, ex.Message);
+            return Problem(detail: ex.Message, statusCode: StatusCodes.Status500InternalServerError);
         }
 
         _logger.LogInformation(
             "Manifest validated for run {RunId} with version {Version}",
             runId,
-            manifest.ManifestVersion);
+            artifacts.Manifest.ManifestVersion);
 
-        var entry = new Aos.WebApi.Models.EventLogEntry(
-            RunId: runId,
-            EventType: "workflow.hello",
-            Data: new { Message = "hello", ManifestVersion = manifest.ManifestVersion },
-            OccurredAtUtc: now);
-
-        await _eventLogWriter.WriteAsync(entry, cancellationToken);
+        foreach (var entry in artifacts.EventLogEntries)
+        {
+            await _eventLogWriter.WriteAsync(entry, cancellationToken);
+        }
 
         _logger.LogInformation("Completed workflow hello for run {RunId}", runId);
 
         return Ok(new
         {
             RunId = runId,
-            Manifest = manifest
+            Manifest = artifacts.Manifest
         });
     }
 }
