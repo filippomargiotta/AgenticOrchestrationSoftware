@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Aos.WebApi\Aos.WebApi.csproj" />
+    <ProjectReference Include="..\Aos.ReplayCli\Aos.ReplayCli.csproj" />
   </ItemGroup>
 
 </Project>
